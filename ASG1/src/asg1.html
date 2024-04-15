@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Change a point color</title>
+    <style>
+      .container {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .drawing-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+    </style>
+  </head>
+
+  <body onload="main()">
+    <div class="container">
+      <canvas id="webgl" width="400" height="400">
+        Please use a browser that supports "canvas"
+      </canvas>
+
+      <div class="drawing-section">
+        <img id="triangleDrawing" src="IMG_0311.jpeg" alt="Triangle Drawing" style="width:100%; max-width:300px;">
+        <button type="button" id="recreateButton">Recreate Drawing</button>
+      </div>
+    </div>
+
+    <div style="position: fixed; bottom: 10px; right: 10px; width: 300px; white-space: normal;">
+      <p>Notes to Grader: For my extra elements I added a color wheel so it's easier to pick the exact color and see what color you are picking and as well I added an undo button so that there is some form of erasing.</p>
+    </div>
+    
+    
+
+    <p id = "numdot"> XXX </p>
+
+    <input type="color" id="colorPicker" value="#ffffff" style="margin:10px;">
+
+    <button type="button" id="green">Green</button>
+    <button type="button" id="red">Red</button>   
+
+    <button type="button" id="clearButton">Clear</button>  
+    <p>
+    
+    <button type="button" id="pointButton">Point</button>   
+    <button type="button" id="triButton">Triangle</button>  
+    <button type="button" id="circleButton">Circles</button>  
+
+    <button type="button" id="undoButton">Undo</button>
+    <button type="button" id="redoButton">Redo</button>
+
+    
+
+    <p>
+    Red <input type="range" min="0" max="100" value="100" class="slider" id="redSlide">
+    <p>
+    Green <input type="range" min="0" max="100" value="100" class="slider" id="greenSlide">
+    <p>
+    Blue <input type="range" min="0" max="100" value="100" class="slider" id="blueSlide">
+
+    <p>
+    Size <input type="range" min="5" max="40" value="0" class="slider" id="sizeSlide">
+    <p>
+
+    <p>
+      Segments <input type="range" min="3" max="100" value="10" class="slider" id="segmentSlide">
+    </p>
+
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Point.js"></script>
+    <script src="Circles.js"></script>
+
+    <script src="asg1.js"></script>
+  </body>
+</html>
