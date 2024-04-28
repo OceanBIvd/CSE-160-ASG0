@@ -1,52 +1,43 @@
 class Cube{
-    constructor(segments = 10){
-        this.type='cube';
-        //this.position=[0.0,0.0,0.0];
-        this.color=[1.0,1.0,1.0,1.0];
-        //this.size=5.0;
-        //this.segments = segments;
-        this.matrix = new Matrix4();
+    constructor(segments = 10){               // Constructor with default segments parameter
+        this.type='cube';                     // Initialize type property as 'cube'
+        this.color=[1.0,1.0,1.0,1.0];         // Sets theccolor of the cube to white
+        this.matrix = new Matrix4();          // Initialize a 4x4 transformation matrix
     }
     render(){
+        var rgba = this.color;                // Local variable for the cube's color
 
-
-        var rgba = this.color;
-
-
-        // Pass the color of a point to u_FragColor variable
+        // Set the color for the fragment shader
         gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
 
-        //Pass the matrix to a u_matrixmodel atrribute
+        // Pass the transformation matrix to the vertex shader
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
 
+        // Draw the front face of the cube using two triangles
+        drawTriangle3D([0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]);
+        drawTriangle3D([0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]);
 
-
-        //Front of the Cube
-        drawTriangle3D( [0.0, 0.0, 0.0,   1.0, 1.0, 0.0,    1.0,0.0,0.0]);
-        drawTriangle3D( [0.0, 0.0, 0.0,   0.0, 1.0, 0.0,    1.0,1.0,0.0]);
-
-        // Back face
+        // Draw the back face of the cube using two triangles
         drawTriangle3D([0, 0, 1, 1, 0, 1, 1, 1, 1]);
         drawTriangle3D([0, 0, 1, 1, 1, 1, 0, 1, 1]);
 
-        // Bottom face
+        // Draw the bottom face of the cube using two triangles
         drawTriangle3D([0, 0, 0, 1, 0, 1, 1, 0, 0]);
         drawTriangle3D([0, 0, 0, 0, 0, 1, 1, 0, 1]);
 
-        // Left face
+        // Draw the left face of the cube using two triangles
         drawTriangle3D([0, 0, 0, 0, 1, 1, 0, 1, 0]);
         drawTriangle3D([0, 0, 0, 0, 0, 1, 0, 1, 1]);
 
-        // Right face
+        // Draw the right face of the cube using two triangles
         drawTriangle3D([1, 0, 0, 1, 1, 0, 1, 1, 1]);
         drawTriangle3D([1, 0, 0, 1, 1, 1, 1, 0, 1]);
 
+        // Set a darker color for the top face
         gl.uniform4f(u_FragColor, rgba[0]*.9, rgba[1]*.9, rgba[2]*.9, rgba[3]);
 
-
-        //top of cube 
-        drawTriangle3D([0,1,0,  0,1,1, 1,1,1]);
-        drawTriangle3D([0,1,0,  1,1,1, 1,1,0]);
-        }
-   // }
+        // Draw the top face of the cube using two triangles
+        drawTriangle3D([0,1,0, 0,1,1, 1,1,1]);
+        drawTriangle3D([0,1,0, 1,1,1, 1,1,0]);
+    }
 }

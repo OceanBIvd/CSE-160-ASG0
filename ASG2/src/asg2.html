@@ -1,67 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+  <script src="../lib/webgl-utils.js"></script> <!-- Library for WebGL utilities -->
+  <script src="../lib/webgl-debug.js"></script> <!-- Library for WebGL debugging -->
+  <script src="../lib/cuon-utils.js"></script> <!-- Library for common utilities -->
+  <script src="../lib/cuon-matrix-cse160.js"></script> <!-- Library for matrix operations -->
+  <script src="Triangle.js"></script> <!-- Triangle functionality -->
+  <script src="Point.js"></script> <!-- Point functionality -->
+  <script src="Circles.js"></script> <!-- Circles functionality -->
+  <script src="Cube.js"></script> <!-- Cube functionality -->
+  <script src="asg2.js"></script> <!-- Main script for assignment 2 -->
+</head>
+<body onload="main()"> <!-- Calls the main function when the page loads -->
 
-  <body onload="main()">
-    <div class="container">
-      <canvas id="webgl" width="400" height="400">
-        Please use a browser that supports "canvas"
-      </canvas>        
-      </div>
-    </div>
+  <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas" <!-- Fallback text for non-supporting browsers -->
+  </canvas>
 
-    <div style="position: fixed; bottom: 10px; right: 10px; width: 300px; white-space: normal;">
-      <p>
-        Diego Yanez 
-        <br>
-        dyanez4@ucsc.edu   
-        <br>      
-        Notes to Grader: </p>
-    </div>
-    
-    
-
-    <p id = "numdot"> XXX </p>
-
-
-    <button type="button" id="green">X</button>
-    <button type="button" id="red">X</button>   
-
-    <button type="button" id="clearButton">X</button>  
+  <div style="position: fixed; bottom: 10px; right: 10px; width: 300px;">
     <p>
-    
-    <button type="button" id="pointButton">X</button>   
-    <button type="button" id="triButton">X</button>  
-    <button type="button" id="circleButton">X</button>  
+      Diego Yanez<br>
+      dyanez4@ucsc.edu<br>
+      Notes to Grader: For the camera angle I implemented it so that you can click directly around the canvas. Click down and drag to move camera.
+    </p>
+  </div>
+
+  <p id="numdot">XXX</p> <!-- Placeholder text -->
 
 
-    
+  <div>
+    <label>Y-axis Rotation: <input type="range" min="-180" max="180" value="0" class="slider" id="xAxisSlide"></label>
+    <label>X-axis Rotation: <input type="range" min="-180" max="180" value="0" class="slider" id="yAxisSlide"></label>
 
-    <p>
-    X <input type="range" min="0" max="100" value="100" class="slider" id="redSlide">
-    <p>
-    Magenta <input type="range" min="-45" max="45" value="0" class="slider" id="magentaSlide">
-    Animation:
-    <button type="button" id="animationMagentaOnButton">ON</button>
-    <button type="button" id="animationMagentaOffButton">OFF</button>
-    <p>
-    Yellow <input type="range" min="-45" max="45" value="0" class="slider" id="yellowSlide">
-    Animation:
-    <button type="button" id="animationYellowOnButton">ON</button>
-    <button type="button" id="animationYellowOffButton">OFF</button>
+    <label>Wing Flap: <input type="range" min="0" max="50" value="0" class="slider" id="wingFlapSlide"></label>
+    <label>Beak Movement: <input type="range" min="0" max="10" value="0" class="slider" id="beakMovementSlide"></label>
+    <label>Leg Movement: <input type="range" min="-20" max="20" value="0" class="slider" id="legMovementSlide"></label>
 
-    <p>
-    Camera Angle <input type="range" min="0" max="90" value="5" class="slider" id="angleSlide">
-    <p>
-      
-    <script src="../lib/webgl-utils.js"></script>
-    <script src="../lib/webgl-debug.js"></script>
-    <script src="../lib/cuon-utils.js"></script>
-    <script src="../lib/cuon-matrix-cse160.js"></script>
-    <script src="Triangle.js"></script>
-    <script src="Point.js"></script>
-    <script src="Circles.js"></script>
-    <script src="Cube.js"></script>
+    <button type="button" id="wingAnimationToggle">Toggle Wing Animation</button>
+    <button type="button" id="beakAnimationToggle">Toggle Beak Animation</button>
+    <button type="button" id="legAnimationToggle">Toggle Leg Animation</button>
+    <button type="button" id="resetButton">Reset Position</button>
+    <button type="button" id="toggleAllAnimationsButton">Toggle All Animations</button>
+  </div>
 
-    <script src="asg2.js"></script>
-  </body>
+</body>
 </html>
