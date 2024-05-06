@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="../lib/webgl-utils.js"></script> <!-- Library for WebGL utilities -->
+  <script src="../lib/webgl-debug.js"></script> <!-- Library for WebGL debugging -->
+  <script src="../lib/cuon-utils.js"></script> <!-- Library for common utilities -->
+  <script src="../lib/cuon-matrix-cse160.js"></script> <!-- Library for matrix operations -->
+  <script src="Triangle.js"></script> <!-- Triangle functionality -->
+  <script src="Point.js"></script> <!-- Point functionality -->
+  <script src="Circles.js"></script> <!-- Circles functionality -->
+  <script src="Cube.js"></script> <!-- Cube functionality -->
+  <script src="asg3.js"></script> <!-- Main script for assignment 2 -->
+</head>
+<body onload="main()"> <!-- Calls the main function when the page loads -->
+
+  <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas" <!-- Fallback text for non-supporting browsers -->
+  </canvas>
+
+  <div style="position: fixed; bottom: 10px; right: 10px; width: 300px;">
+    <p>
+      Diego Yanez<br>
+      dyanez4@ucsc.edu<br>
+      Notes to Grader: For the camera angle I implemented it so that you can click directly around the canvas. Click down and drag to move camera. For the textures i added a flower texture on the body of the chicken and the sky texture on the wings.
+    </p>
+  </div>
+
+  <p id="numdot">XXX</p> <!-- Placeholder text -->
+
+
+  <div>
+    <label>Y-axis Rotation: <input type="range" min="-180" max="180" value="0" class="slider" id="xAxisSlide"></label>
+    <label>X-axis Rotation: <input type="range" min="-180" max="180" value="0" class="slider" id="yAxisSlide"></label>
+
+    <label>Wing Flap: <input type="range" min="0" max="50" value="0" class="slider" id="wingFlapSlide"></label>
+    <label>Beak Movement: <input type="range" min="0" max="10" value="0" class="slider" id="beakMovementSlide"></label>
+    <label>Leg Movement: <input type="range" min="-20" max="20" value="0" class="slider" id="legMovementSlide"></label>
+
+    <button type="button" id="wingAnimationToggle">Toggle Wing Animation</button>
+    <button type="button" id="beakAnimationToggle">Toggle Beak Animation</button>
+    <button type="button" id="legAnimationToggle">Toggle Leg Animation</button>
+    <button type="button" id="resetButton">Reset Position</button>
+    <button type="button" id="toggleAllAnimationsButton">Toggle All Animations</button>
+  </div>
+
+</body>
+</html>
