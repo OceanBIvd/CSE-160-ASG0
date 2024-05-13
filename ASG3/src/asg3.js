@@ -1,3 +1,4 @@
+// Vertex shader program
 var VSHADER_SOURCE = `
   precision mediump float;
   attribute vec4 a_Position; 
@@ -9,6 +10,7 @@ var VSHADER_SOURCE = `
     v_UV = a_UV;
   }`;
 
+// Fragment shader program
 var FSHADER_SOURCE = `
   precision mediump float;
   varying vec2 v_UV;
@@ -25,10 +27,11 @@ var FSHADER_SOURCE = `
     else gl_FragColor = vec4(1, 0.2, 0.2, 1); // Error case
   }`;
 
-// Global Variables
+// Global variables for WebGL
 let canvas, gl;
 let a_Position, a_UV;
-let u_FragColor, u_ModelMatrix, u_ProjectionMatrix, u_ViewMatrix, u_GlobalRotateMatrix, u_Sampler0, u_Sampler1, u_Sampler2, u_Sampler3, u_whichTexture;
+let u_FragColor, u_ModelMatrix, u_ProjectionMatrix, u_ViewMatrix, u_GlobalRotateMatrix;
+let u_Sampler0, u_Sampler1, u_Sampler2, u_Sampler3, u_whichTexture;
 let g_xMRotation = 0, g_yMRotation = 0, g_zMRotation = 0;
 let wingFlapAngle = 0, wingFlapDirection = 1;
 let beakMovementAngle = 0, beakDirection = 1, beakMaxRotation = 10;
@@ -37,6 +40,7 @@ let wattleDirection = 1, wattleAngle = 0;
 let feetDirection = 1, feetAngle = 0;
 let camera;
 
+// Function to set up WebGL
 function setupWebGL() {
   canvas = document.getElementById('webgl');
   gl = canvas.getContext("webgl", { preserveDrawingBuffer: true, depth: true });
@@ -53,6 +57,7 @@ function setupWebGL() {
   }
 }
 
+// Function to get uniform location in GLSL program
 function getUniformLocation(program, name) {
   const location = gl.getUniformLocation(program, name);
   if (!location) {
@@ -62,6 +67,7 @@ function getUniformLocation(program, name) {
   return location;
 }
 
+// Function to connect variables to GLSL
 function connectVariablesToGLSL() {
   a_Position = gl.getAttribLocation(gl.program, 'a_Position');
   a_UV = gl.getAttribLocation(gl.program, 'a_UV');
@@ -78,14 +84,16 @@ function connectVariablesToGLSL() {
   updateGlobalRotationMatrix(); // Initialize rotation matrix after connecting variables
 }
 
+// Constants for shape types
 const POINT = 0;
 const TRIANGLE = 1;
 const CIRCLE = 2;
 
-let g_selectedColor = [1.0,1.0,1.0,1.0];
+// Global variables for selected attributes
+let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let g_selectedSize = 5;
-let g_selectedType= POINT;
-let g_globalAngle=0;
+let g_selectedType = POINT;
+let g_globalAngle = 0;
 let g_yellowAngle = 0;
 let g_magentaAngle = 0;
 let g_yellowAnimation = false;
@@ -97,7 +105,8 @@ let legAnimation = false;
 let wattleAnimation = false;
 let feetAnimation = false;
 
-function addActionsForHtmlUI(){
+// Function to add actions for HTML UI
+function addActionsForHtmlUI() {
   document.getElementById('xAxisSlide').addEventListener('input', function() {
     g_xMRotation = parseInt(this.value);
     updateGlobalRotationMatrix();
@@ -132,6 +141,10 @@ function addActionsForHtmlUI(){
     legAnimation = !legAnimation; // Toggle the leg animation state
   };
 
+  document.getElementById('skyViewButton').onclick = function() {
+    setSkyView();
+  };
+
   document.getElementById('resetButton').onclick = function() {
     g_xMRotation = 0;
     g_yMRotation = 0;
@@ -164,6 +177,7 @@ function addActionsForHtmlUI(){
   };
 }
 
+// Function to initialize textures
 function initTextures(gl, textureId, imageUrl) {
   var image = new Image();
   image.onload = function() {
@@ -172,6 +186,7 @@ function initTextures(gl, textureId, imageUrl) {
   image.src = imageUrl;
 }
 
+// Function to update global rotation matrix
 function updateGlobalRotationMatrix() {
   const xRad = g_xMRotation * Math.PI / 180;
   const yRad = g_yMRotation * Math.PI / 180;
@@ -179,6 +194,7 @@ function updateGlobalRotationMatrix() {
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 }
 
+// Function to load texture
 function loadTexture(gl, textureId, image) {
   var texture = gl.createTexture();
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -193,38 +209,46 @@ function loadTexture(gl, textureId, image) {
     gl.uniform1i(u_Sampler1, 1);
   } else if (textureId === 2) {
     gl.uniform1i(u_Sampler2, 2);
-  }else if (textureId === 3) {
+  } else if (textureId === 3) {
     gl.uniform1i(u_Sampler3, 3);
-}
+  }
 }
 
+// Function to update WebGL state
 function updateWebGL() {
   gl.uniformMatrix4fv(u_ViewMatrix, false, camera.viewMatrix.elements);
   renderAllShapes();
 }
 
+// Function to handle key down events
 function handleKeyDown(ev) {
   switch (ev.keyCode) {
     case 87: // W key
-        camera.moveForward(0.1);
-        break;
+      camera.moveForward(0.1);
+      break;
     case 83: // S key
-        camera.moveBackward(0.1);
-        break;
+      camera.moveBackward(0.1);
+      break;
     case 65: // A key
-        camera.moveLeft(0.1);
-        break;
+      camera.moveLeft(0.1);
+      break;
     case 68: // D key
-        camera.moveRight(0.1);
-        break;
+      camera.moveRight(0.1);
+      break;
     case 81: // Q key
-        camera.panLeft(5);
-        break;
+      camera.panLeft(5);
+      break;
     case 69: // E key
-        camera.panRight(5);
-        break;
+      camera.panRight(5);
+      break;
+    case 82: // R key (pan up)
+      camera.panUp(5);
+      break;
+    case 70: // F key (pan down)
+      camera.panDown(5);
+      break;
     default:
-        return; // Skip rendering if no relevant key is pressed
+      return; // Skip rendering if no relevant key is pressed
   }
   updateWebGL();
 }
@@ -234,7 +258,7 @@ var g_map = [];
 
 // Function to initialize a larger map
 function initializeMap() {
-  const size = 10;  // Define the size of the map
+  const size = 32;  // Define the size of the map
   g_map = new Array(size).fill(0).map(() => new Array(size).fill(1));  // Initialize all walls
 
   // Create the maze using DFS starting from the top-left corner
@@ -257,9 +281,10 @@ function initializeMap() {
   }
 }
 
+// Function to draw the map
 function drawMap() {
   console.log("Drawing map with size:", g_map.length);
-  const wallHeight = 4;  // Set the height of the walls
+  const wallHeight = 10;  // Set the height of the walls
   for (let x = 0; x < g_map.length; x++) {
     for (let z = 0; z < g_map[x].length; z++) {
       if (g_map[x][z] === 1) {  // Check if it's a wall
@@ -268,74 +293,81 @@ function drawMap() {
           body.textureNum = 3;
           body.color = [1.0, 1.0, 1.0, 1.0];  // Wall color
           body.matrix.translate(x - g_map.length / 2, y, z - g_map[x].length / 2);  // Center the map and stack cubes vertically
-          body.render();
+          body.renderfast();
         }
       }
     }
   }
 }
 
+// Function to set sky view
+function setSkyView() {
+  camera.setSkyView();
+  updateWebGL();
+}
 
-
-
-
+// Main function
 function main() {
-    setupWebGL();
-    connectVariablesToGLSL();
-    addActionsForHtmlUI();
-    initializeMap();
+  setupWebGL();
+  connectVariablesToGLSL();
+  addActionsForHtmlUI();
+  initializeMap();
 
-    camera = new Camera(canvas);
+  camera = new Camera(canvas);
 
-    let isDragging = false;
-    let lastMouseX = -1, lastMouseY = -1;
+  let isDragging = false;
+  let lastMouseX = -1, lastMouseY = -1;
 
-    canvas.onmousedown = function(ev) {
-      isDragging = true;
-      [lastMouseX, lastMouseY] = [ev.clientX, ev.clientY];
-    };
+  // Event listener for mouse down
+  canvas.onmousedown = function(ev) {
+    isDragging = true;
+    [lastMouseX, lastMouseY] = [ev.clientX, ev.clientY];
+  };
 
-    canvas.onmouseup = function(ev) {
-      isDragging = false;
-    };
+  // Event listener for mouse up
+  canvas.onmouseup = function(ev) {
+    isDragging = false;
+  };
 
-    canvas.onmousemove = function(ev) {
-      if (isDragging) {
-        let [currentX, currentY] = [ev.clientX, ev.clientY];
-        let deltaX = currentX - lastMouseX;
-        let deltaY = currentY - lastMouseY;
-        rotateModel(deltaX, deltaY);
-        [lastMouseX, lastMouseY] = [currentX, currentY];
-      }
-    };
+  // Event listener for mouse move
+  canvas.onmousemove = function(ev) {
+    if (isDragging) {
+      let [currentX, currentY] = [ev.clientX, ev.clientY];
+      let deltaX = currentX - lastMouseX;
+      let deltaY = currentY - lastMouseY;
+      rotateModel(deltaX, deltaY);
+      [lastMouseX, lastMouseY] = [currentX, currentY];
+    }
+  };
 
-    initTextures(gl, 0, 'sky1.jpg');
-    initTextures(gl, 1, 'body.jpg');
-    initTextures(gl, 2, 'grass.jpg');
-    initTextures(gl, 3, 'walls.jpg');
+  initTextures(gl, 0, 'sky1.jpg');
+  initTextures(gl, 1, 'body.jpg');
+  initTextures(gl, 2, 'grass.jpg');
+  initTextures(gl, 3, 'walls.jpg');
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
+  // Event listener for key down
   document.onkeydown = function(ev) {
     handleKeyDown(ev);
-};
+  };
 
-requestAnimationFrame(tick);
-
+  requestAnimationFrame(tick);
 }
 
+// Function to rotate the model
 function rotateModel(deltaX, deltaY) {
   g_xMRotation -= deltaY / 100 * 100;
   g_yMRotation -= deltaX / 100 * 100;
   renderAllShapes();
 }
 
-var g_startTime = performance.now()/1000.0;
-var g_seconds = performance.now()/1000.0-g_startTime
+var g_startTime = performance.now() / 1000.0;
+var g_seconds = performance.now() / 1000.0 - g_startTime;
 
-function tick(){
-
-  g_seconds = performance.now()/1000.0-g_startTime;
+// Tick function to update the animation
+function tick() {
+  g_seconds = performance.now() / 1000.0 - g_startTime;
 
   updateAnimationAngles();
 
@@ -344,6 +376,7 @@ function tick(){
   requestAnimationFrame(tick);
 }
 
+// Function to update animation angles
 function updateAnimationAngles() {
   if (wingAnimation) {
     wingFlapAngle += wingFlapDirection * 2;
@@ -383,43 +416,42 @@ function updateAnimationAngles() {
 
 var g_shapesList = [];
 
+// Function to handle click event
 function click(ev) {
-
-  [x,y] = convertCoordinatesEventToGl(ev);
+  [x, y] = convertCoordinatesEventToGl(ev);
 
   let point;
-  if(g_selectedType == POINT){
+  if (g_selectedType == POINT) {
     point = new Point();
-
-  }else if (g_selectedType == TRIANGLE){
+  } else if (g_selectedType == TRIANGLE) {
     point = new Triangle();
   } else if (g_selectedType === CIRCLE) {
     let segments = parseInt(document.getElementById('segmentSlide').value);
     point = new Circle(segments);
   }
 
-  point.position=[x,y];
-  point.color=g_selectedColor.slice();
-  point.size=g_selectedSize;
+  point.position = [x, y];
+  point.color = g_selectedColor.slice();
+  point.size = g_selectedSize;
   g_shapesList.push(point);
 
   renderAllShapes();
-
 }
 
-function convertCoordinatesEventToGl(ev){
-    var x = ev.clientX;
-    var y = ev.clientY;
-    var rect = ev.target.getBoundingClientRect();
+// Function to convert coordinates from event to WebGL coordinates
+function convertCoordinatesEventToGl(ev) {
+  var x = ev.clientX;
+  var y = ev.clientY;
+  var rect = ev.target.getBoundingClientRect();
 
-    x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
-    y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
+  x = ((x - rect.left) - canvas.width / 2) / (canvas.width / 2);
+  y = (canvas.height / 2 - (y - rect.top)) / (canvas.height / 2);
 
-    return([x,y]);
+  return ([x, y]);
 }
 
-function renderAllShapes(){
-
+// Function to render all shapes
+function renderAllShapes() {
   var startTime = performance.now();
 
   camera.projectionMatrix.setPerspective(camera.fov, canvas.width / canvas.height, 0.1, 1000);
@@ -431,16 +463,16 @@ function renderAllShapes(){
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);  
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.clear(gl.COLOR_BUFFER_BIT );
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
   drawMap();
 
   let baseTransform = new Matrix4().scale(2, 2, 2 ); 
   baseTransform.rotate(330, 0, 1, 0);
-  baseTransform.translate(-5, 0.80, 0);
+  baseTransform.translate(-10, 0.80, 2);
 
   var skybox = new Cube();
-  skybox.color = [1,0,0,1];
+  skybox.color = [1, 0, 0, 1];
   skybox.textureNum = 0;
   skybox.matrix.scale(50, 50, 50);
   skybox.matrix.translate(-0.5, -0.5, -0.5);
@@ -448,26 +480,26 @@ function renderAllShapes(){
 
   var floor = new Cube();
   floor.textureNum = 2;
-  floor.color = [0.0,1.0,0.0,1.0];
-  floor.matrix.translate(0,-0.55,0.0);
-  floor.matrix.scale(100,0.5,100);
-  floor.matrix.translate(-.5,0,-0.5);
+  floor.color = [0.0, 1.0, 0.0, 1.0];
+  floor.matrix.translate(0, -0.55, 0.0);
+  floor.matrix.scale(100, 0.5, 100);
+  floor.matrix.translate(-.5, 0, -0.5);
   floor.render();
 
   let body = new Cube();
   body.textureNum = 1;
-  body.color = [0.961,1,1,1.00];
+  body.color = [0.961, 1, 1, 1.00];
   body.matrix = new Matrix4(baseTransform).translate(-.20, -0.4, 0.0).scale(0.5, 0.5, 0.8);
   body.render();
 
   let head = new Cube();
   head.textureNum = 1;
-  head.color = [0.961,1,1,1.00];
+  head.color = [0.961, 1, 1, 1.00];
   head.matrix = new Matrix4(baseTransform).translate(-.15, -0.1, .70).scale(0.40, 0.5, 0.25);
   head.render();
 
   let beak = new Cube();
-  beak.color = [.804,.655,.38, 1.0];
+  beak.color = [.804, .655, .38, 1.0];
   beak.matrix = new Matrix4(baseTransform).translate(-0.15, 0.2, .95).scale(0.40, 0.05, 0.1);
   beak.render();
 
@@ -479,14 +511,14 @@ function renderAllShapes(){
     .scale(0.40, 0.05, 0.1);
   beak2.render();
 
-let wattle = new Cube();
-wattle.color = [.769, 0.129, 0.153, 1.0];
-let wattleTransform = new Matrix4(baseTransform)
-  .translate(0.00, 0.05, 0.95)
-  .rotate(beakMovementAngle, 1, 0, 0)
-  .scale(0.10, 0.1, 0.1);
-wattle.matrix = wattleTransform;
-wattle.render();
+  let wattle = new Cube();
+  wattle.color = [.769, 0.129, 0.153, 1.0];
+  let wattleTransform = new Matrix4(baseTransform)
+    .translate(0.00, 0.05, 0.95)
+    .rotate(beakMovementAngle, 1, 0, 0)
+    .scale(0.10, 0.1, 0.1);
+  wattle.matrix = wattleTransform;
+  wattle.render();
 
   let eye1 = new Cube();
   eye1.color = [0.0, 0.0, 0.0, 1.0];
@@ -498,30 +530,30 @@ wattle.render();
   eye2.matrix = new Matrix4(baseTransform).translate(-0.15, 0.25, 0.95).scale(0.05, 0.05, 0.05);
   eye2.render();
 
-    let wing1 = new Cube();
-    wing1.color = [0.82, 0.859, 0.949, 1.0];
-    wing1.textureNum = 1;
-    let wing1Transform = new Matrix4(baseTransform)
-      .translate(0.3, -0.35, 0.1)
-      .translate(0, 0.4, 0)
-      .rotate(wingFlapAngle, 0, 0, 1)
-      .translate(0, -0.4, 0)
-      .scale(0.1, 0.4, 0.6);
-    wing1.matrix = wing1Transform;
-    wing1.render();
+  let wing1 = new Cube();
+  wing1.color = [0.82, 0.859, 0.949, 1.0];
+  wing1.textureNum = 1;
+  let wing1Transform = new Matrix4(baseTransform)
+    .translate(0.3, -0.35, 0.1)
+    .translate(0, 0.4, 0)
+    .rotate(wingFlapAngle, 0, 0, 1)
+    .translate(0, -0.4, 0)
+    .scale(0.1, 0.4, 0.6);
+  wing1.matrix = wing1Transform;
+  wing1.render();
 
-    let wing2 = new Cube();
-    wing2.color = [0.82, 0.859, 0.949, 1.0];
-    wing2.textureNum = 1;
-    let wing2Transform = new Matrix4(baseTransform)
-      .translate(-0.2, -0.35, 0.1)
-      .scale(-1, 1, 1)
-      .translate(0, 0.4, 0)
-      .rotate(wingFlapAngle, 0, 0, 1)
-      .translate(0, -0.4, 0)
-      .scale(0.1, 0.4, 0.6);
-    wing2.matrix = wing2Transform;
-    wing2.render();
+  let wing2 = new Cube();
+  wing2.color = [0.82, 0.859, 0.949, 1.0];
+  wing2.textureNum = 1;
+  let wing2Transform = new Matrix4(baseTransform)
+    .translate(-0.2, -0.35, 0.1)
+    .scale(-1, 1, 1)
+    .translate(0, 0.4, 0)
+    .rotate(wingFlapAngle, 0, 0, 1)
+    .translate(0, -0.4, 0)
+    .scale(0.1, 0.4, 0.6);
+  wing2.matrix = wing2Transform;
+  wing2.render();
 
   let leg1 = new Cube();
   leg1.color = [1, 1, 0.635, 1.0];
@@ -564,14 +596,15 @@ wattle.render();
   foot2.render();
 
   var duration = performance.now() - startTime;
-  sendTextToHTML("ms: " + Math.floor(duration) + " fps: " + Math.floor(10000/duration)/10, "numdot");
+  sendTextToHTML("ms: " + Math.floor(duration) + " fps: " + Math.floor(10000 / duration) / 10, "numdot");
 }
 
-function sendTextToHTML(text, htmlID){
+// Function to send text to HTML element
+function sendTextToHTML(text, htmlID) {
   var htmlElm = document.getElementById(htmlID);
-  if (!htmlElm){
-      console.log("Failed to to get " + htmlID + " from HTML");
-      return;
+  if (!htmlElm) {
+    console.log("Failed to to get " + htmlID + " from HTML");
+    return;
   }
   htmlElm.innerHTML = text;
 }
