@@ -21,6 +21,7 @@ var FSHADER_SOURCE =`
   uniform vec4 u_FragColor;
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
+  uniform sampler2D u_Sampler2;
   uniform int u_whichTexture;
   void main() {
 
@@ -36,7 +37,10 @@ var FSHADER_SOURCE =`
     }else if (u_whichTexture == 1){ //use texture1
       gl_FragColor = texture2D(u_Sampler1, v_UV);
 
-    } else{ //error put reddish
+    } else if (u_whichTexture == 2){ //use texture2
+      gl_FragColor = texture2D(u_Sampler2, v_UV);
+  
+  }else{ //error put reddish
       gl_FragColor = vec4(1,.2,.2,1);
     }
 
@@ -57,6 +61,7 @@ let u_GlobalRotateMatrix;
 let u_whichTexture;
 let u_Sampler0;    
 let u_Sampler1;
+let u_Sampler2;
 
 // Global rotation angles for mouse movement
 let g_xMRotation = 0; 
@@ -79,6 +84,8 @@ let wattleDirection = 1; // Initial direction for wattle animation
 let feetDirection = 1; // Initial direction for feet animation
 let wattleAngle = 0; // Initialize wattle angle for animation
 let feetAngle = 0;
+let camera; // Declare a camera variable globally
+
 
 function setupWebGL(){
   canvas = document.getElementById('webgl'); // Get canvas element by ID
@@ -166,6 +173,12 @@ function connectVariablesToGLSL(){
   u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
   if (!u_Sampler1){
     console.log('Failed to get the storage location of u_Sampler1');
+    return;
+  }
+
+  u_Sampler2 = gl.getUniformLocation(gl.program, 'u_Sampler2');
+  if (!u_Sampler2){
+    console.log('Failed to get the storage location of u_Sampler2');
     return;
   }
 
@@ -277,21 +290,7 @@ function addActionsForHtmlUI(){
 
 }
 
-// function initTextures(gl, n) { // (Part4)
 
-//   var image = new Image(); // Create an image object
-//   if (!image){
-//     console.log('Failed to create the image object');
-//     return false;
-//   }
-
-//   // Register the event handler to be called on loading an image
-//   image.onload = function(){ sendTextureToGLSL(image); };
-//   // Tell the browser to load an image
-//   image.src = 'sky.jpg';
-
-//   return true;
-// }
 
 function initTextures(gl, textureId, imageUrl) {
   var image = new Image(); // Create an image object
@@ -312,29 +311,7 @@ function updateGlobalRotationMatrix() {
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 }
 
-// function sendTextureToGLSL( image) { // (Part5)
 
-//   var texture = gl.createTexture(); // Create a texture object
-
-//   if (!texture){
-//     console.log('Failed to create the texture object');
-//     return false;
-//   }
-
-//   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
-//   // Enable the texture unit 0
-//   gl.activeTexture(gl.TEXTURE0);
-//   // Bind the texture object to the target
-//   gl.bindTexture(gl.TEXTURE_2D, texture);
-//   // Set the texture parameters
-//   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-//   // Set the texture image
-//   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-//   // Set the texture unit 0 to the sampler
-//   gl.uniform1i(u_Sampler0, 0);
-  
-//   console.log('finished loadTexture')
-// }
 
 function loadTexture(gl, textureId, image) {
   var texture = gl.createTexture(); // Create a texture object
@@ -348,7 +325,75 @@ function loadTexture(gl, textureId, image) {
     gl.uniform1i(u_Sampler0, 0);
   } else if (textureId === 1) {
     gl.uniform1i(u_Sampler1, 1);
+  }else if (textureId === 2){}
+    gl.uniform1i(u_Sampler2, 2);
+}
+
+function updateWebGL() {
+  gl.uniformMatrix4fv(u_ViewMatrix, false, camera.viewMatrix.elements);
+  renderAllShapes(); // Update the scene rendering
+}
+
+function handleKeyDown(ev) {
+  switch (ev.keyCode) {
+      case 87: // W key
+          camera.moveForward(0.1);
+          break;
+      case 83: // S key
+          camera.moveBackward(0.1);
+          break;
+      case 65: // A key
+          camera.moveLeft(0.1);
+          break;
+      case 68: // D key
+          camera.moveRight(0.1);
+          break;
+      case 81: // Q key
+          camera.panLeft(5); // Rotate left, angle in degrees
+          break;
+      case 69: // E key
+          camera.panRight(5); // Rotate right, angle in degrees
+          break;
+      default:
+          return; // Skip rendering if no relevant key is pressed
   }
+  updateWebGL();
+}
+
+let walls = []; // Global variable for storing walls
+// Define a 2D array representing the map
+var map = [
+  //[2, 2, 2, 2],
+  //[2, 2, 2, 2],
+  //[2, 0, 0, 2],
+  //[2, 2, 2, 2]
+];
+
+function createWallsFromMap() {
+  let walls = [];
+  // Define the scale for the wall cubes here
+  let scaleX = 0.5;  // Smaller width of each wall cube
+  let scaleY = 1;    // Keep the original height for demonstration
+  let scaleZ = 0.5;  // Smaller depth of each wall cube
+
+  // Double loop to process each cell in the 2D array
+  for (let x = 0; x < map.length; x++) {
+      for (let z = 0; z < map[x].length; z++) {
+          let height = map[x][z];  // Get the height from the map
+          if (height > 0) {  // Check if we need to place a wall
+              for (let y = 0; y < height; y++) {  // Iterate over the height
+                  let w = new Cube();  // Create a new cube
+                  // Set the position of the cube
+                  // Adjust the position to account for smaller cube size
+                  w.matrix.translate(x * scaleX, y * scaleY, z * scaleZ);
+                  // Set the size of the cube
+                  w.matrix.scale(scaleX, scaleY, scaleZ);
+                  walls.push(w);  // Add the cube to the walls array
+              }
+          }
+      }
+  }
+  return walls;
 }
 
 function main() {
@@ -359,6 +404,10 @@ function main() {
 
     //Set up actions for the HTML UI elements
     addActionsForHtmlUI();
+
+    camera = new Camera(canvas); 
+
+    //drawMap();
 
     let isDragging = false; // Flag for mouse drag state
     let lastMouseX = -1, lastMouseY = -1; // Last mouse positions
@@ -381,17 +430,25 @@ function main() {
         [lastMouseX, lastMouseY] = [currentX, currentY]; // Update last mouse positions
       }
     };
+
+    
   
 
-    initTextures(gl, 0, 'sky.jpg');
-    initTextures(gl, 1, 'flower.jpg'); 
+    initTextures(gl, 0, 'sky1.jpg');
+    initTextures(gl, 1, 'body.jpg'); 
+    initTextures(gl, 2, 'grass.jpg'); 
 
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
+  document.onkeydown = function(ev) {
+    handleKeyDown(ev);
+};
 
+walls = createWallsFromMap();
 requestAnimationFrame(tick);
+
 }
 
 function rotateModel(deltaX, deltaY) {
@@ -497,20 +554,16 @@ function convertCoordinatesEventToGl(ev){
     return([x,y]);
 }
 
-
 function renderAllShapes(){
 
   var startTime = performance.now();
 
   //Pass the Projection Matrix 
-  var projMat = new Matrix4();
-  projMat.setPerspective(60, canvas.width/canvas.height, .1, 1000);
-  gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
+  camera.projectionMatrix.setPerspective(camera.fov, canvas.width / canvas.height, 0.1, 1000);
+  gl.uniformMatrix4fv(u_ProjectionMatrix, false, camera.projectionMatrix.elements);
 
   //Pass the view Matrix
-  var viewMat = new Matrix4();
-  viewMat.setLookAt(0,0,3, 0,0,-100,0,1,0);
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
+  gl.uniformMatrix4fv(u_ViewMatrix, false, camera.viewMatrix.elements);
 
   let globalRotMat = new Matrix4().rotate(g_xMRotation, 1, 0, 0).rotate(g_yMRotation, 0, 1, 0); // Create global rotation matrix
   gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);  
@@ -518,9 +571,14 @@ function renderAllShapes(){
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT );
+
+  // Render each wall
+  walls.forEach(wall => wall.render()); // Render walls stored in the global array
+  
   //Base transformation for the whole chicken: smaller scale and flipped
-  let baseTransform = new Matrix4().scale(0.7, 0.7, 0.7); // Scale down to 50%
+  let baseTransform = new Matrix4().scale(2, 2, 2 ); 
   baseTransform.rotate(330, 0, 1, 0); // Rotate 180 degrees to flip the chicken
+  baseTransform.translate(1, 0.80, 0);
 
 
   //sky 
@@ -533,10 +591,10 @@ function renderAllShapes(){
   
   //Floor
   var floor = new Cube();
+  floor.textureNum = 2;
   floor.color = [0.0,1.0,0.0,1.0];
-  floor.textureNum = -2;
-  floor.matrix.translate(0,-.75,0.0);
-  floor.matrix.scale(10,0,10);
+  floor.matrix.translate(0,-0.55,0.0);
+  floor.matrix.scale(100,0.5,100);
   floor.matrix.translate(-.5,0,-0.5);
   floor.render();
 
@@ -549,6 +607,7 @@ function renderAllShapes(){
 
   // Head of the Chicken
   let head = new Cube();
+  head.textureNum = 1;
   head.color = [0.961,1,1,1.00]; // White head
   head.matrix = new Matrix4(baseTransform).translate(-.15, -0.1, .70).scale(0.40, 0.5, 0.25); // Apply base transformation
   head.render();
@@ -592,7 +651,7 @@ wattle.render();
     // Wings of the Chicken with the rotation pivot adjusted to where the wing connects to the body
     let wing1 = new Cube();
     wing1.color = [0.82, 0.859, 0.949, 1.0]; // Light grayish color
-    wing1.textureNum = 0;
+    wing1.textureNum = 1;
     let wing1Transform = new Matrix4(baseTransform)
       .translate(0.3, -0.35, 0.1) // Move to wing's position
       .translate(0, 0.4, 0) // Move origin to the top of the wing (where it connects to the body)
@@ -604,7 +663,7 @@ wattle.render();
 
     let wing2 = new Cube();
     wing2.color = [0.82, 0.859, 0.949, 1.0];
-    wing2.textureNum = 0;
+    wing2.textureNum = 1;
     let wing2Transform = new Matrix4(baseTransform)
       .translate(-0.2, -0.35, 0.1) // Move to the opposite wing's position
       .scale(-1, 1, 1) // Flip the wing horizontally across the Y-axis

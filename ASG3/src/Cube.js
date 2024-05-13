@@ -43,12 +43,58 @@ class Cube{
         drawTriangle3DUV([0, 0, 0, 1, 0, 1, 0, 0, 1], [0, 1, 1, 0, 0, 0]);
 
         // Left face
-        drawTriangle3DUV([0, 0, 1, 0, 1, 1, 0, 1, 0], [1, 0, 1, 1, 0, 1]);
-        drawTriangle3DUV([0, 0, 1, 0, 1, 0, 0, 1, 1], [1, 0, 0, 1, 1, 1]);
-
+        drawTriangle3DUV([0,0,0,  0,1,1,  0,1,0], [1, 0, 0, 1, 1, 1]);
+        drawTriangle3DUV([0,0,0,  0,0,1,  0,1,1], [1, 0, 1, 1, 0, 1]);
+        
         // Right face
         drawTriangle3DUV([1, 0, 0, 1, 1, 1, 1, 1, 0], [0, 0, 1, 1, 0, 1]);
         drawTriangle3DUV([1, 0, 0, 1, 0, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1]);
      }
    
+     renderFast(){
+
+
+        var rgba = this.color;
+
+
+        //gl.uniform1i(u_whichTexture, this.textureNum);
+
+        // Pass the color of a point to u_FragColor variable
+        gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
+
+        //Pass the matrix to a u_matrixmodel atrribute
+        gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+
+        var allverts = [];
+
+        //Front of cube 
+        allverts=allverts.concat([0,0,0,  1,1,0, 1,0,0]);
+        allverts=allverts.concat([0,0,0,  0,1,0, 1,1,0]);
+
+        //Top of cube 
+        allverts=allverts.concat([0,1,0,  0,1,1, 1,1,1]);
+        allverts=allverts.concat([0,1,0,  1,1,1, 1,1,0]);
+
+        //Right of cube 
+        allverts=allverts.concat([1,1,0,  1,1,1, 1,0,0]);
+        allverts=allverts.concat([1,0,0,  1,1,1, 1,0,1]);
+
+        //Left of cube 
+        allverts=allverts.concat([0,1,0,  0,1,1, 0,0,0]);
+        allverts=allverts.concat([0,0,0,  0,1,1, 0,0,1]);
+
+        //Bottom of cube 
+        allverts=allverts.concat([0,0,0,  0,0,1, 1,0,1]);
+        allverts=allverts.concat([0,0,0,  1,0,1, 1,0,0]);
+
+        //Back of cube 
+        allverts=allverts.concat([0,0,1,  1,1,1, 1,0,1]);
+        allverts=allverts.concat([0,0,1,  0,1,1, 1,1,1]);
+
+        drawTriangle3D(allverts);
+
+
+
+     }
+
 }
