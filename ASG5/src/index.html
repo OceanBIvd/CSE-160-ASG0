@@ -1,220 +1,359 @@
-<!-- Licensed under a BSD license. See license.html for license -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Three.js - OBJ Loading</title>
-    <style>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Three.js - Farm</title>
+  <style> 
     html, body {
-        height: 100%;
-        margin: 0;
+      height: 100%;
+      margin: 0;
     }
     #c {
-        width: 100%;
-        height: 100%;
-        display: block;
+      width: 100%;
+      height: 100%;
+      display: block;
     }
     #loading {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     #loading .progress {
-        margin: 1.5em;
-        border: 1px solid white;
-        width: 50vw;
+      margin: 1.5em;
+      border: 1px solid white;
+      width: 50vw;
     }
     #loading .progressbar {
-        margin: 2px;
-        background: white;
-        height: 1em;
-        transform-origin: top left;
-        transform: scaleX(0);
+      margin: 2px;
+      background: white;
+      height: 1em;
+      transform-origin: top left;
+      transform: scaleX(0);
     }
-    </style>
-  </head>
-  <body>
-    <canvas id="c"></canvas>
-    <div id="loading">
-      <div class="progress"><div class="progressbar"></div></div>
-    </div>
-  </body>
-<script type="importmap">
-{
-  "imports": {
-    "three": "../lib/three.module.js"
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="loading">
+    <div class="progress"><div class="progressbar"></div></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "../lib/three.module.js"
+    }
   }
-}
-</script>
+  </script>
 
-<script type="module">
-import * as THREE from 'three';
-import {OrbitControls} from '../lib/OrbitControls.js';
-import { OBJLoader } from '../lib/OBJLoader.js';
-import { MTLLoader } from '../lib/MTLLoader.js';
+  <script type="module">
+  import * as THREE from 'three';
+  import {OrbitControls} from '../lib/OrbitControls.js';
+  import { OBJLoader } from '../lib/OBJLoader.js';
+  import { MTLLoader } from '../lib/MTLLoader.js';
 
-function main() {
+  function main() {
+    // Get the canvas element and set up the renderer
+    const canvas = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+    renderer.setClearColor(0xADD8E6, 1); 
 
-	const canvas = document.querySelector( '#c' );
-	const renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
-  renderer.setClearColor(0xADD8E6, 1); 
+    // Set up camera parameters
+    const fov = 75;
+    const aspect = 2; 
+    const near = 0.1;
+    const far = 100;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.set(0, 2, 10);
 
+    // Create scene
+    const scene = new THREE.Scene();
+	
+    // Load cubemap textures for the skybox
+    const loader = new THREE.CubeTextureLoader();
+    const skyboxTexture = loader.load([
+      'px.jpg', // pos-x
+      'nx.jpg', // neg-x
+      'py.jpg', // pos-y
+      'ny.jpg', // neg-y
+      'pz.jpg', // pos-z
+      'nz.jpg', // neg-z
+    ]);
+    scene.background = skyboxTexture;
 
-  
+    // Create a cube and load textures for each face
+    const boxWidth = 1;
+    const boxHeight = 1;
+    const boxDepth = 1;
+    const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
 
-	const fov = 75;
-	const aspect = 2; 
-	const near = 0.1;
-	const far = 1000;
-	const camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
-	camera.position.z = 5;
+    const cubes = [];
+    const loadManager = new THREE.LoadingManager();
+    const textureLoader = new THREE.TextureLoader(loadManager);
 
-	const scene = new THREE.Scene();
+    const materials = [
+      new THREE.MeshBasicMaterial({ map: loadColorTexture('Remy.jpg') }),
+      new THREE.MeshBasicMaterial({ map: loadColorTexture('Remy1.jpg') }),
+      new THREE.MeshBasicMaterial({ map: loadColorTexture('remy2.jpg') }),
+      new THREE.MeshBasicMaterial({ map: loadColorTexture('remy3.jpg') }),
+      new THREE.MeshBasicMaterial({ map: loadColorTexture('remy4.jpg') }),
+      new THREE.MeshBasicMaterial({ map: loadColorTexture('remy5.jpg') }),
+    ];
 
-	const boxWidth = 1;
-	const boxHeight = 1;
-	const boxDepth = 1;
-	const geometry = new THREE.BoxGeometry( boxWidth, boxHeight, boxDepth );
+    // Loading progress
+    const loadingElem = document.querySelector('#loading');
+    const progressBarElem = loadingElem.querySelector('.progressbar');
 
-	const cubes = [];
-	const loadManager = new THREE.LoadingManager();
-	const loader = new THREE.TextureLoader( loadManager );
+    loadManager.onLoad = () => {
+      loadingElem.style.display = 'none';
+      const cube = new THREE.Mesh(geometry, materials);
+      cube.position.y = 3;
+	  cube.position.x = 50;
+      scene.add(cube);
+      cubes.push(cube);
+    };
 
-	const materials = [
-		new THREE.MeshBasicMaterial( { map: loadColorTexture( 'Remy.jpg' ) } ),
-		new THREE.MeshBasicMaterial( { map: loadColorTexture( 'Remy1.jpg' ) } ),
-		new THREE.MeshBasicMaterial( { map: loadColorTexture( 'remy2.jpg' ) } ),
-		new THREE.MeshBasicMaterial( { map: loadColorTexture( 'remy3.jpg' ) } ),
-		new THREE.MeshBasicMaterial( { map: loadColorTexture( 'remy4.jpg' ) } ),
-		new THREE.MeshBasicMaterial( { map: loadColorTexture( 'remy5.jpg' ) } ),
-	];
+    // Create a plane geometry for the ground
+	const planeSize = 40;
+    const planeTexture = new THREE.TextureLoader().load('grass.jpg');
+    planeTexture.wrapS = THREE.RepeatWrapping;
+    planeTexture.wrapT = THREE.RepeatWrapping;
+    planeTexture.magFilter = THREE.NearestFilter;
+    planeTexture.repeat.set(planeSize / 2, planeSize / 2);
 
-	const loadingElem = document.querySelector( '#loading' );
-	const progressBarElem = loadingElem.querySelector( '.progressbar' );
+    const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+    const planeMat = new THREE.MeshPhongMaterial({
+      map: planeTexture,
+      side: THREE.DoubleSide,
+    });
+    const plane = new THREE.Mesh(planeGeo, planeMat);
+    plane.rotation.x = Math.PI * -.5;
+    scene.add(plane);
 
-	loadManager.onLoad = () => {
+    // Adding primary shapes for the farm
+    const shapes = [];
 
-		loadingElem.style.display = 'none';
-		const cube = new THREE.Mesh( geometry, materials );
-		scene.add( cube );
-		cubes.push( cube ); // add to our list of cubes to rotate
+	// Barn using cube
+	const barnGeo = new THREE.BoxGeometry(5, 4, 4);
+	const barnMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('barn.jpg') });
+    const barn = new THREE.Mesh(barnGeo, barnMaterial);
+    barn.position.set(-8, 2.01, 5);
+    scene.add(barn);
+    shapes.push(barn);
 
-	};
+	// Barn Roof using cone
+	const barnRoofGeo = new THREE.ConeGeometry(5, 4, 4);
+	const roofMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('barn.jpg') });
+    const barnRoof = new THREE.Mesh(barnRoofGeo, roofMaterial);
+    barnRoof.position.set(-8, 5.4, 5);
+    barnRoof.rotation.y = Math.PI / 4;
+	barnRoof.scale.set(.70, .70, .70);
+    scene.add(barnRoof);
+    shapes.push(barnRoof);
 
-  // Sphere
-	const sphereRadius = 0.75;
-	const sphereWidthDivisions = 32;
-	const sphereHeightDivisions = 16;
-	const sphereGeometry = new THREE.SphereGeometry(sphereRadius, sphereWidthDivisions, sphereHeightDivisions);
-	const sphereMaterial = new THREE.MeshPhongMaterial({color: '#CA8'});
-	const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-	sphere.position.x = -2;
-	scene.add(sphere);
+	// Silos using cylinder
+	const siloGeo = new THREE.CylinderGeometry(0.5, 0.5, 3, 32);
+    const siloMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('silo.jpg') });
+    for (let i = 0; i < 3; i++) {
+      const silo = new THREE.Mesh(siloGeo, siloMaterial);
+      silo.position.set(-10 + i * 2, 1.501, 0);
+      scene.add(silo);
+      shapes.push(silo);
 
-  // Cylinder
-	const cylinderRadiusTop = 0.5;
-	const cylinderRadiusBottom = 0.5;
-	const cylinderHeight = 2;
-	const cylinderRadialSegments = 32;
-	const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadiusTop, cylinderRadiusBottom, cylinderHeight, cylinderRadialSegments);
-	const cylinderMaterial = new THREE.MeshPhongMaterial({color: '#A8C'});
-	const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-	cylinder.position.x = 2;
-	scene.add(cylinder);
+      // Silo Roof using sphere
+      const siloRoofGeo = new THREE.SphereGeometry(0.5, 32, 16);
+	  const siloRoofMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('siloRoof.jpg') });
+      const siloRoof = new THREE.Mesh(siloRoofGeo, siloRoofMaterial);
+      siloRoof.position.set(-10 + i * 2, 3, 0);
+      scene.add(siloRoof);
+      shapes.push(siloRoof);
+    }
 
-	loadManager.onProgress = ( urlOfLastItemLoaded, itemsLoaded, itemsTotal ) => {
+	// Trees using cone and cyclinder
+	const treeTrunkGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 32);
+    const treeLeavesGeo = new THREE.ConeGeometry(0.5, 1, 32);
+    const treeTrunkMaterial = new THREE.MeshPhongMaterial({ color: '#8B4513' });
+    const treeLeavesMaterial = new THREE.MeshPhongMaterial({ color: '#228B22' });
+    for (let i = 0; i < 5; i++) {
+      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
+      treeTrunk.position.set(2 + i * 2, 0.5, -4);
+      scene.add(treeTrunk);
+      shapes.push(treeTrunk);
 
-		const progress = itemsLoaded / itemsTotal;
-		progressBarElem.style.transform = `scaleX(${progress})`;
+      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
+      treeLeaves.position.set(2 + i * 2, 1.5, -4);
+      scene.add(treeLeaves);
+      shapes.push(treeLeaves);
+    }
 
-	};
+	for (let i = 0; i < 5; i++) {
+      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
+      treeTrunk.position.set(2 + i * 2, 0.5, -8);
+      scene.add(treeTrunk);
+      shapes.push(treeTrunk);
 
-	function resizeRendererToDisplaySize( renderer ) {
+      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
+      treeLeaves.position.set(2 + i * 2, 1.5, -8);
+      scene.add(treeLeaves);
+      shapes.push(treeLeaves);
+    }
 
-		const canvas = renderer.domElement;
-		const width = canvas.clientWidth;
-		const height = canvas.clientHeight;
-		const needResize = canvas.width !== width || canvas.height !== height;
-		if ( needResize ) {
+	for (let i = 0; i < 5; i++) {
+      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
+      treeTrunk.position.set(-10 + i * 2, 0.5, -8);
+      scene.add(treeTrunk);
+      shapes.push(treeTrunk);
 
-			renderer.setSize( width, height, false );
+      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
+      treeLeaves.position.set(-10 + i * 2, 1.5, -8);
+      scene.add(treeLeaves);
+      shapes.push(treeLeaves);
+    }
 
-		}
+	for (let i = 0; i < 5; i++) {
+      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
+      treeTrunk.position.set(-10 + i * 2, 0.5, -4);
+      scene.add(treeTrunk);
+      shapes.push(treeTrunk);
 
-		return needResize;
+      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
+      treeLeaves.position.set(-10 + i * 2, 1.5, -4);
+      scene.add(treeLeaves);
+      shapes.push(treeLeaves);
+    }
 
-	}
+	// Windmill using cylinder, box, and cone 
+	const windmillBaseGeo = new THREE.CylinderGeometry(0.3, 0.3, 2, 32);
+	const windmillMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('windmill.jpg') });
+    const windmillBase = new THREE.Mesh(windmillBaseGeo, windmillMaterial);
+    windmillBase.position.set(0, 3.01, 0);
+	windmillBase.scale.set(3, 3, 3);
+    scene.add(windmillBase);
+    shapes.push(windmillBase);
 
-	function loadColorTexture( path ) {
+    const windmillBladesGeo = new THREE.BoxGeometry(0.1, 0.5, 0.02);
+    const windmillBladesMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('Wood.jpg') });
+    const windmillBlades = [];
+    for (let i = 0; i < 4; i++) {
+      const blade = new THREE.Mesh(windmillBladesGeo, windmillBladesMaterial);
+      blade.position.set(0, 6, 1);
+	  blade.scale.set(6, 6, 6);
+      blade.rotation.z = (i * Math.PI) / 2;
+      scene.add(blade);
+      windmillBlades.push(blade);
+    }
 
-		const texture = loader.load( path );
-		texture.colorSpace = THREE.SRGBColorSpace;
-		return texture;
+	// Windmill Roof using cone 
+	const windmillRoofGeo = new THREE.ConeGeometry(0.5, 1, 32);
+	const windmillRoofMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('windmillRoof.jpg') });
+    const windmillRoof = new THREE.Mesh(windmillRoofGeo, windmillRoofMaterial);
+    windmillRoof.position.set(0, 7, 0);
+    windmillRoof.scale.set(2, 2, 2);
+    scene.add(windmillRoof);
+    shapes.push(windmillRoof);
 
-	}
+    // Update the progress bar during loading
+    loadManager.onProgress = (urlOfLastItemLoaded, itemsLoaded, itemsTotal) => {
+      const progress = itemsLoaded / itemsTotal;
+      progressBarElem.style.transform = `scaleX(${progress})`;
+    };
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 3); // Soft white light
+    // Resize the renderer to fit the display size
+    function resizeRendererToDisplaySize(renderer) {
+      const canvas = renderer.domElement;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const needResize = canvas.width !== width || canvas.height !== height;
+      if (needResize) {
+        renderer.setSize(width, height, false);
+      }
+      return needResize;
+    }
+
+    // Load color texture
+    function loadColorTexture(path) {
+      const texture = textureLoader.load(path);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
+    // Add ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Soft white light
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
-    directionalLight.position.set(1, 1, 1).normalize();
+    // Add directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
-  {
+    // Add spotlight
+    const spotLight = new THREE.SpotLight(0xffffff, 1);
+    spotLight.position.set(10, 10, 10);
+    spotLight.angle = Math.PI / 4;
+    spotLight.penumbra = 0.1;
+    spotLight.decay = 2;
+    spotLight.distance = 200;
+    scene.add(spotLight);
+
+    // Set up orbit controls
+    const controls = new OrbitControls(camera, canvas);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    // Load and add OBJ model 
     const mtlLoader = new MTLLoader();
-      mtlLoader.load('dog1.mtl', (mtl) => {
+    mtlLoader.load('dog1.mtl', (mtl) => {
       mtl.preload();
-    const objLoader = new OBJLoader();
+      const objLoader = new OBJLoader();
       objLoader.setMaterials(mtl);
       objLoader.load('dog1.obj', (root) => {
-    
-      root.position.set(4, -2, 1);
-      root.scale.set(0.02, 0.02, 0.02);
-      scene.add(root);
-  });
-});
+        root.position.set(4, 0.01, 1);
+        root.scale.set(0.02, 0.02, 0.02);
+        scene.add(root);
+      });
+    });
 
+    // Render the scene
+    function render(time) {
+      time *= 0.001;  // Convert time to seconds
+      if (resizeRendererToDisplaySize(renderer)) {
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+      }
 
+      // Rotate windmill blades
+      windmillBlades.forEach((blade) => {
+        blade.rotation.z += 0.01;
+      });
 
-}
+      // Rotate cubes
+      cubes.forEach((cube, ndx) => {
+        const speed = .2 + ndx * .1;
+        const rot = time * speed;
+        cube.rotation.x = rot;
+        cube.rotation.y = rot;
+      });
 
-	function render( time ) {
+      // Render the scene from the perspective of the camera
+      renderer.render(scene, camera);
 
-		time *= 0.001;
+      // Request the next frame
+      requestAnimationFrame(render);
+    }
 
-		if ( resizeRendererToDisplaySize( renderer ) ) {
+    // Start rendering
+    requestAnimationFrame(render);
+  }
 
-			const canvas = renderer.domElement;
-			camera.aspect = canvas.clientWidth / canvas.clientHeight;
-			camera.updateProjectionMatrix();
-
-		}
-
-		cubes.forEach( ( cube, ndx ) => {
-
-			const speed = .2 + ndx * .1;
-			const rot = time * speed;
-			cube.rotation.x = rot;
-			cube.rotation.y = rot;
-
-		} );
-
-		renderer.render( scene, camera );
-
-		requestAnimationFrame( render );
-
-	}
-
-	requestAnimationFrame( render );
-
-}
-
-main();
-</script>
+  // Execute main function
+  main();
+  </script>
+</body>
 </html>
