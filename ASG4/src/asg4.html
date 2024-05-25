@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="../lib/webgl-utils.js"></script> <!-- Library for WebGL utilities -->
+  <script src="../lib/webgl-debug.js"></script> <!-- Library for WebGL debugging -->
+  <script src="../lib/cuon-utils.js"></script> <!-- Library for common utilities -->
+  <script src="../lib/cuon-matrix-cse160.js"></script> <!-- Library for matrix operations -->
+  <script src="Triangle.js"></script> <!-- Triangle functionality -->
+  <script src="Point.js"></script> <!-- Point functionality -->
+  <script src="Circles.js"></script> <!-- Circles functionality -->
+  <script src="Cube.js"></script> <!-- Cube functionality -->
+  <script src="Camera.js"></script> 
+  <script src="Sphere.js"></script> 
+  <script src="asg4.js"></script> <!-- Main script for assignment 2 -->
+</head>
+<body onload="main()"> <!-- Calls the main function when the page loads -->
+
+  <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas" <!-- Fallback text for non-supporting browsers -->
+  </canvas>
+
+  <div style="position: fixed; top: 10px; right: 10px; width: 300px;">
+    <p>
+      Diego Yanez<br>
+      dyanez4@ucsc.edu<br>
+      Notes to Grader: In order to move the light around with the sliders you need to first turn off the lightanimation using the light toggle button. As well there is a spotlight button when pressed the light toggles between spotlight and normal light.The spotlight starts small but sliding the y-light slider all the way right makes it more noticable. 
+    </p>
+  </div>
+
+
+
+  <p id="numdot">XXX</p> <!-- Placeholder text -->
+  <button type="button" id="normalOn">Normal On</button>
+  <button type="button" id="normalOff">Normal Off</button>
+  <button type="button" id="toggleLightAnimationButton">Toggle Light Animation</button>
+  <button type="button" id="toggleLightButton">Toggle Light</button> 
+  <button id="toggleSpotlightButton">Toggle Spotlight</button>
+
+  <p>
+    Light X <input type="range" min="-2500" max="2500" value="0" class="slider" id="lightSlideX"></label>
+    Light Y <input type="range" min="-2000" max="2000" value="100" class="slider" id="lightSlideY"></label>
+    Light Z <input type="range" min="-2500" max="2000" value="-200" class="slider" id="lightSlideZ"></label>
+
+  <p>
+
+  <div>
+
+    <label>Y-axis Rotation: <input type="range" min="-180" max="180" value="0" class="slider" id="xAxisSlide"></label>
+    <label>X-axis Rotation: <input type="range" min="-180" max="180" value="0" class="slider" id="yAxisSlide"></label>
+
+    <label>Beak Movement: <input type="range" min="0" max="10" value="0" class="slider" id="beakMovementSlide"></label>
+    <label>Leg Movement: <input type="range" min="-20" max="20" value="0" class="slider" id="legMovementSlide"></label>
+
+    <button type="button" id="wingAnimationToggle">Toggle Wing Animation</button>
+    <button type="button" id="beakAnimationToggle">Toggle Beak Animation</button>
+    <button type="button" id="legAnimationToggle">Toggle Leg Animation</button>
+    <button type="button" id="resetButton">Reset Position</button>
+    <button type="button" id="toggleAllAnimationsButton">Toggle All Animations</button>
+    <button type="button" id="skyViewButton">Sky View</button>
+
+  </div>
+</body>
+</html>
