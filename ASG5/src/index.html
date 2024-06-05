@@ -36,9 +36,36 @@
       transform-origin: top left;
       transform: scaleX(0);
     }
+
+    #toggleButton {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background-color: #fff;
+      border: none;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    #infoBox {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.8);
+      width: 300px;
+    }
+
   </style>
 </head>
 <body>
+  <div id="infoBox">
+    <p>Diego Yanez</p>
+    <p>Dyanez4@ucsc.edu</p>
+    <p>Notes to Grader: For my world I have created a farm where a farmer is growing crops and raising horses. The horses are in the barn and the farmer is standing outside with his dog. Also on the top left there is a button to turn it from day to night in which doing so will display a sun or moon respectively.</p>
+  </div>
+  <button id="toggleButton">Toggle Day/Night</button>
   <canvas id="c"></canvas>
   <div id="loading">
     <div class="progress"><div class="progressbar"></div></div>
@@ -54,9 +81,10 @@
 
   <script type="module">
   import * as THREE from 'three';
-  import {OrbitControls} from '../lib/OrbitControls.js';
+  import { OrbitControls } from '../lib/OrbitControls.js';
   import { OBJLoader } from '../lib/OBJLoader.js';
   import { MTLLoader } from '../lib/MTLLoader.js';
+  import { GLTFLoader } from '../lib/GLTFLoader.js';
 
   function main() {
     // Get the canvas element and set up the renderer
@@ -74,7 +102,7 @@
 
     // Create scene
     const scene = new THREE.Scene();
-	
+    
     // Load cubemap textures for the skybox
     const loader = new THREE.CubeTextureLoader();
     const skyboxTexture = loader.load([
@@ -114,13 +142,13 @@
       loadingElem.style.display = 'none';
       const cube = new THREE.Mesh(geometry, materials);
       cube.position.y = 3;
-	  cube.position.x = 50;
+      cube.position.x = 50;
       scene.add(cube);
       cubes.push(cube);
     };
 
     // Create a plane geometry for the ground
-	const planeSize = 40;
+    const planeSize = 20;
     const planeTexture = new THREE.TextureLoader().load('grass.jpg');
     planeTexture.wrapS = THREE.RepeatWrapping;
     planeTexture.wrapT = THREE.RepeatWrapping;
@@ -136,133 +164,314 @@
     plane.rotation.x = Math.PI * -.5;
     scene.add(plane);
 
-    // Adding primary shapes for the farm
-    const shapes = [];
-
-	// Barn using cube
-	const barnGeo = new THREE.BoxGeometry(5, 4, 4);
-	const barnMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('barn.jpg') });
-    const barn = new THREE.Mesh(barnGeo, barnMaterial);
-    barn.position.set(-8, 2.01, 5);
-    scene.add(barn);
-    shapes.push(barn);
-
-	// Barn Roof using cone
-	const barnRoofGeo = new THREE.ConeGeometry(5, 4, 4);
-	const roofMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('barn.jpg') });
-    const barnRoof = new THREE.Mesh(barnRoofGeo, roofMaterial);
-    barnRoof.position.set(-8, 5.4, 5);
-    barnRoof.rotation.y = Math.PI / 4;
-	barnRoof.scale.set(.70, .70, .70);
-    scene.add(barnRoof);
-    shapes.push(barnRoof);
-
-	// Silos using cylinder
-	const siloGeo = new THREE.CylinderGeometry(0.5, 0.5, 3, 32);
-    const siloMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('silo.jpg') });
-    for (let i = 0; i < 3; i++) {
-      const silo = new THREE.Mesh(siloGeo, siloMaterial);
-      silo.position.set(-10 + i * 2, 1.501, 0);
-      scene.add(silo);
-      shapes.push(silo);
-
-      // Silo Roof using sphere
-      const siloRoofGeo = new THREE.SphereGeometry(0.5, 32, 16);
-	  const siloRoofMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('siloRoof.jpg') });
-      const siloRoof = new THREE.Mesh(siloRoofGeo, siloRoofMaterial);
-      siloRoof.position.set(-10 + i * 2, 3, 0);
-      scene.add(siloRoof);
-      shapes.push(siloRoof);
-    }
-
-	// Trees using cone and cyclinder
-	const treeTrunkGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 32);
+    // Trees using cone and cylinder
+    const treeTrunkGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 32);
     const treeLeavesGeo = new THREE.ConeGeometry(0.5, 1, 32);
     const treeTrunkMaterial = new THREE.MeshPhongMaterial({ color: '#8B4513' });
     const treeLeavesMaterial = new THREE.MeshPhongMaterial({ color: '#228B22' });
-    for (let i = 0; i < 5; i++) {
+
+    // Define the range for random positions
+    const treeBoxSize = {
+      xMin: -9,
+      xMax: 9,
+      zMin: -9,
+      zMax: 0,
+    };
+
+    function getRandomPosition(range) {
+      return Math.random() * (range.max - range.min) + range.min;
+    }
+
+    const trees = [];
+
+    for (let i = 0; i < 60; i++) {
+      let x, z;
+      let isTooClose;
+
+      do {
+        x = getRandomPosition({ min: treeBoxSize.xMin, max: treeBoxSize.xMax });
+        z = getRandomPosition({ min: treeBoxSize.zMin, max: treeBoxSize.zMax });
+        
+        isTooClose = trees.some(tree => {
+          const dx = tree.position.x - x;
+          const dz = tree.position.z - z;
+          return Math.sqrt(dx * dx + dz * dz) < 1; // Minimum distance between trees
+        });
+      } while (isTooClose);
+
       const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
-      treeTrunk.position.set(2 + i * 2, 0.5, -4);
+      treeTrunk.position.set(x, 0.6, z);
       scene.add(treeTrunk);
-      shapes.push(treeTrunk);
 
       const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
-      treeLeaves.position.set(2 + i * 2, 1.5, -4);
+      treeLeaves.position.set(x, 1.5, z);
       scene.add(treeLeaves);
-      shapes.push(treeLeaves);
+
+      trees.push(treeTrunk);
     }
-
-	for (let i = 0; i < 5; i++) {
-      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
-      treeTrunk.position.set(2 + i * 2, 0.5, -8);
-      scene.add(treeTrunk);
-      shapes.push(treeTrunk);
-
-      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
-      treeLeaves.position.set(2 + i * 2, 1.5, -8);
-      scene.add(treeLeaves);
-      shapes.push(treeLeaves);
-    }
-
-	for (let i = 0; i < 5; i++) {
-      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
-      treeTrunk.position.set(-10 + i * 2, 0.5, -8);
-      scene.add(treeTrunk);
-      shapes.push(treeTrunk);
-
-      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
-      treeLeaves.position.set(-10 + i * 2, 1.5, -8);
-      scene.add(treeLeaves);
-      shapes.push(treeLeaves);
-    }
-
-	for (let i = 0; i < 5; i++) {
-      const treeTrunk = new THREE.Mesh(treeTrunkGeo, treeTrunkMaterial);
-      treeTrunk.position.set(-10 + i * 2, 0.5, -4);
-      scene.add(treeTrunk);
-      shapes.push(treeTrunk);
-
-      const treeLeaves = new THREE.Mesh(treeLeavesGeo, treeLeavesMaterial);
-      treeLeaves.position.set(-10 + i * 2, 1.5, -4);
-      scene.add(treeLeaves);
-      shapes.push(treeLeaves);
-    }
-
-	// Windmill using cylinder, box, and cone 
-	const windmillBaseGeo = new THREE.CylinderGeometry(0.3, 0.3, 2, 32);
-	const windmillMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('windmill.jpg') });
-    const windmillBase = new THREE.Mesh(windmillBaseGeo, windmillMaterial);
-    windmillBase.position.set(0, 3.01, 0);
-	windmillBase.scale.set(3, 3, 3);
-    scene.add(windmillBase);
-    shapes.push(windmillBase);
-
-    const windmillBladesGeo = new THREE.BoxGeometry(0.1, 0.5, 0.02);
-    const windmillBladesMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('Wood.jpg') });
-    const windmillBlades = [];
-    for (let i = 0; i < 4; i++) {
-      const blade = new THREE.Mesh(windmillBladesGeo, windmillBladesMaterial);
-      blade.position.set(0, 6, 1);
-	  blade.scale.set(6, 6, 6);
-      blade.rotation.z = (i * Math.PI) / 2;
-      scene.add(blade);
-      windmillBlades.push(blade);
-    }
-
-	// Windmill Roof using cone 
-	const windmillRoofGeo = new THREE.ConeGeometry(0.5, 1, 32);
-	const windmillRoofMaterial = new THREE.MeshPhongMaterial({ map: new THREE.TextureLoader().load('windmillRoof.jpg') });
-    const windmillRoof = new THREE.Mesh(windmillRoofGeo, windmillRoofMaterial);
-    windmillRoof.position.set(0, 7, 0);
-    windmillRoof.scale.set(2, 2, 2);
-    scene.add(windmillRoof);
-    shapes.push(windmillRoof);
 
     // Update the progress bar during loading
     loadManager.onProgress = (urlOfLastItemLoaded, itemsLoaded, itemsTotal) => {
       const progress = itemsLoaded / itemsTotal;
       progressBarElem.style.transform = `scaleX(${progress})`;
     };
+
+    // Load and add OBJ model
+    const mtlLoader = new MTLLoader();
+    mtlLoader.load('barn.mtl', (materials) => {
+      materials.preload();
+      const objLoader = new OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.load('barn.obj', (object) => {
+        object.position.set(-8, 0.01, 3);
+        object.scale.set(.5, .5, .5);
+        object.rotation.x = 3* Math.PI/2;  
+        object.rotation.z = 3* Math.PI/2;  
+        scene.add(object);
+      });
+    });
+  
+    // Load and add OBJ model (Windmill)
+    const windmillMtlLoader = new MTLLoader();
+    windmillMtlLoader.load('wind.mtl', (materials) => {
+      materials.preload();
+      const windmillObjLoader = new OBJLoader();
+      windmillObjLoader.setMaterials(materials);
+      windmillObjLoader.load('wind.obj', (object) => {
+        object.position.set(-5, 1.65, 2);
+        object.scale.set(1, 1, 1);
+        object.rotation.y =  Math.PI / 4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const siloMtlLoader = new MTLLoader();
+    siloMtlLoader.load('silo.mtl', (materials) => {
+      materials.preload();
+      const siloObjLoader = new OBJLoader();
+      siloObjLoader.setMaterials(materials);
+      siloObjLoader.load('silo.obj', (object) => {
+        object.position.set(-9, 0.01, 2);
+        object.scale.set(.3, .3, .3);
+        object.rotation.y =  Math.PI / 4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const silo2MtlLoader = new MTLLoader();
+    silo2MtlLoader.load('silo.mtl', (materials) => {
+      materials.preload();
+      const silo2ObjLoader = new OBJLoader();
+      silo2ObjLoader.setMaterials(materials);
+      silo2ObjLoader.load('silo.obj', (object) => {
+        object.position.set(-8, 0.01, 1);
+        object.scale.set(.3, .3, .3);
+        object.rotation.y =  Math.PI / 4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const hayStackMtlLoader = new MTLLoader();
+    hayStackMtlLoader.load('HayStack.mtl', (materials) => {
+      materials.preload();
+      const hayStackObjLoader = new OBJLoader();
+      hayStackObjLoader.setMaterials(materials);
+      hayStackObjLoader.load('HayStack.obj', (object) => {
+        object.position.set(-3, 0.01, 3);
+        object.scale.set(.2, .2, .2);
+        object.rotation.y =  Math.PI / 4; 
+        scene.add(object);
+      });
+    });
+  
+
+    // Load and add OBJ model (silo)
+    const hayStack2MtlLoader = new MTLLoader();
+    hayStack2MtlLoader.load('HayStack.mtl', (materials) => {
+      materials.preload();
+      const hayStack2ObjLoader = new OBJLoader();
+      hayStack2ObjLoader.setMaterials(materials);
+      hayStack2ObjLoader.load('HayStack.obj', (object) => {
+        object.position.set(-8, 0.3, 5.5);
+        object.scale.set(.1, .1, .1);
+        object.rotation.y =  Math.PI / 4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const FenceMtlLoader = new MTLLoader();
+    FenceMtlLoader.load('Fence.mtl', (materials) => {
+      materials.preload();
+      const FenceObjLoader = new OBJLoader();
+      FenceObjLoader.setMaterials(materials);
+      FenceObjLoader.load('Fence.obj', (object) => {
+        object.position.set(-8, 0.3, 5);
+        object.scale.set(.1, .1, .1);
+        //object.rotation.y =  Math.PI/4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const Fence1MtlLoader = new MTLLoader();
+    Fence1MtlLoader.load('Fence.mtl', (materials) => {
+      materials.preload();
+      const Fence1ObjLoader = new OBJLoader();
+      Fence1ObjLoader.setMaterials(materials);
+      Fence1ObjLoader.load('Fence.obj', (object) => {
+        object.position.set(-7, 0.3, 5);
+        object.scale.set(.1, .1, .1);
+        //object.rotation.y =  Math.PI/4; 
+        scene.add(object);
+      });
+    });
+
+
+    // Load and add OBJ model (silo)
+    const Fence2MtlLoader = new MTLLoader();
+    Fence2MtlLoader.load('Fence.mtl', (materials) => {
+      materials.preload();
+      const Fence2ObjLoader = new OBJLoader();
+      Fence2ObjLoader.setMaterials(materials);
+      Fence2ObjLoader.load('Fence.obj', (object) => {
+        object.position.set(-6, 0.3, 5);
+        object.scale.set(.1, .1, .1);
+        //object.rotation.y =  Math.PI/4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const Fence3MtlLoader = new MTLLoader();
+    Fence3MtlLoader.load('Fence.mtl', (materials) => {
+      materials.preload();
+      const Fence3ObjLoader = new OBJLoader();
+      Fence3ObjLoader.setMaterials(materials);
+      Fence3ObjLoader.load('Fence.obj', (object) => {
+        object.position.set(-5.5, 0.3, 5);
+        object.scale.set(.1, .1, .1);
+        //object.rotation.y =  Math.PI/4; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add OBJ model (silo)
+    const HorseMtlLoader = new MTLLoader();
+    HorseMtlLoader.load('WildHorse.mtl', (materials) => {
+      materials.preload();
+      const HorseObjLoader = new OBJLoader();
+      HorseObjLoader.setMaterials(materials);
+      HorseObjLoader.load('WildHorse.obj', (object) => {
+        object.position.set(-5.5, 0.3, 5.4);
+        object.scale.set(.08, .08, .08);
+        object.rotation.y =  Math.PI; 
+        scene.add(object);
+      });
+    });
+
+    const Horse2MtlLoader = new MTLLoader();
+    Horse2MtlLoader.load('WildHorse.mtl', (materials) => {
+      materials.preload();
+      const Horse2ObjLoader = new OBJLoader();
+      Horse2ObjLoader.setMaterials(materials);
+      Horse2ObjLoader.load('WildHorse.obj', (object) => {
+        object.position.set(-6, 0.3, 5.4);
+        object.scale.set(.08, .08, .08);
+        object.rotation.y =  Math.PI; 
+        scene.add(object);
+      });
+    });
+
+    const Horse3MtlLoader = new MTLLoader();
+    Horse3MtlLoader.load('WildHorse.mtl', (materials) => {
+      materials.preload();
+      const Horse3ObjLoader = new OBJLoader();
+      Horse3ObjLoader.setMaterials(materials);
+      Horse3ObjLoader.load('WildHorse.obj', (object) => {
+        object.position.set(-7, 0.3, 5.4);
+        object.scale.set(.08, .08, .08);
+        object.rotation.y =  Math.PI; 
+        scene.add(object);
+      });
+    });
+
+    const TractorMtlLoader = new MTLLoader();
+    TractorMtlLoader.load('Tractor.mtl', (materials) => {
+      materials.preload();
+      const TractorObjLoader = new OBJLoader();
+      TractorObjLoader.setMaterials(materials);
+      TractorObjLoader.load('Tractor.obj', (object) => {
+        object.position.set(-7, 0.3, 5.4);
+        object.scale.set(1, 1, 1);
+        object.rotation.y =  Math.PI; 
+        scene.add(object);
+      });
+    });
+
+    // Load and add GLB model (Windmill)
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.load('Crops.glb', (gltf) => {
+      const windmill = gltf.scene;
+      windmill.position.set(6, 0.01, 6);
+      windmill.scale.set(2, 2, 2);
+      scene.add(windmill);
+    });
+
+    // Load and add GLB model (Windmill)
+    const gltfLoader2 = new GLTFLoader();
+    gltfLoader.load('Farmer.glb', (gltf) => {
+      const Farmer = gltf.scene;
+      Farmer.position.set(-4, 0.01, 6);
+      Farmer.scale.set(.5, .5, .5);
+      Farmer.rotation.y =  Math.PI /4; 
+      scene.add(Farmer);
+    });
+
+    // Load and add GLB model (Windmill)
+    const gltfLoader3 = new GLTFLoader();
+    gltfLoader.load('Crops.glb', (gltf) => {
+      const windmill = gltf.scene;
+      windmill.position.set(3, 0.01, 2.7);
+      windmill.scale.set(2, 2, 2);
+      scene.add(windmill);
+    });
+
+    // Load and add GLB model (Windmill)
+    const gltfLoader4 = new GLTFLoader();
+    gltfLoader.load('Crops.glb', (gltf) => {
+      const windmill = gltf.scene;
+      windmill.position.set(6, 0.01, 2.7);
+      windmill.scale.set(2, 2, 2);
+      scene.add(windmill);
+    });
+
+    // Load and add GLB model (Windmill)
+    const gltfLoader5 = new GLTFLoader();
+    gltfLoader.load('Crops.glb', (gltf) => {
+      const windmill = gltf.scene;
+      windmill.position.set(3, 0.01, 6);
+      windmill.scale.set(2, 2, 2);
+      scene.add(windmill);
+    });
+
+    const DogMtlLoader = new MTLLoader();
+    DogMtlLoader.load('great_dane.mtl', (materials) => {
+      materials.preload();
+      const DogObjLoader = new OBJLoader();
+      DogObjLoader.setMaterials(materials);
+      DogObjLoader.load('great_dane.obj', (object) => {
+        object.position.set(-3.5, -0.1, 6);
+        object.scale.set(.2, .2, .2);
+        object.rotation.y =  Math.PI /4; 
+        scene.add(object);
+      });
+    });
+
+
 
     // Resize the renderer to fit the display size
     function resizeRendererToDisplaySize(renderer) {
@@ -306,19 +515,55 @@
     controls.target.set(0, 0, 0);
     controls.update();
 
-    // Load and add OBJ model 
-    const mtlLoader = new MTLLoader();
-    mtlLoader.load('dog1.mtl', (mtl) => {
-      mtl.preload();
-      const objLoader = new OBJLoader();
-      objLoader.setMaterials(mtl);
-      objLoader.load('dog1.obj', (root) => {
-        root.position.set(4, 0.01, 1);
-        root.scale.set(0.02, 0.02, 0.02);
-        scene.add(root);
+    let isDay = true;
+    let sun = null;
+    let moon = null;
+
+    const toggleButton = document.getElementById('toggleButton');
+    toggleButton.addEventListener('click', () => {
+      isDay = !isDay;
+      toggleDayNight();
+    });
+
+    function toggleDayNight() {
+      if (isDay) {
+        scene.background = skyboxTexture;
+        ambientLight.intensity = 1;
+        directionalLight.intensity = 1;
+        if (moon) scene.remove(moon);
+        if (sun) scene.add(sun);
+      } else {
+        scene.background = new THREE.Color(0x000022);
+        ambientLight.intensity = 0.2;
+        directionalLight.intensity = 0.2;
+        if (sun) scene.remove(sun);
+        if (moon) scene.add(moon);
+      }
+    }
+
+    const sunMtlLoader = new MTLLoader();
+    sunMtlLoader.load('sun.mtl', (materials) => {
+      materials.preload();
+      const sunObjLoader = new OBJLoader();
+      sunObjLoader.setMaterials(materials);
+      sunObjLoader.load('sun.obj', (object) => {
+        sun = object;
+        sun.position.set(0, 10, -10);
+        scene.add(sun);
       });
     });
 
+    const moonMtlLoader = new MTLLoader();
+    moonMtlLoader.load('1226 moon.mtl', (materials) => {
+      materials.preload();
+      const moonObjLoader = new OBJLoader();
+      moonObjLoader.setMaterials(materials);
+      moonObjLoader.load('1226 moon.obj', (object) => {
+        moon = object;
+        moon.position.set(0, 8, -10);
+        moon.scale.set(0.05, 0.05, 0.05);
+      });
+    });
     // Render the scene
     function render(time) {
       time *= 0.001;  // Convert time to seconds
@@ -327,11 +572,6 @@
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
       }
-
-      // Rotate windmill blades
-      windmillBlades.forEach((blade) => {
-        blade.rotation.z += 0.01;
-      });
 
       // Rotate cubes
       cubes.forEach((cube, ndx) => {
